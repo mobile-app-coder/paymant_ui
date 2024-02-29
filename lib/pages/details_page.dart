@@ -87,15 +87,15 @@ class _DetailsPageState extends State<DetailsPage> {
 
   //save cards to memory
   _saveCard(CreditCard card) async {
+
     List<CreditCard>? cards = [];
     List<CreditCard>? storedCards = await Shared.loadCardList();
     if (storedCards != null) {
       cards.addAll(storedCards);
-    } else {}
-    Shared.removeUserList();
+    }
+    Shared.removeCardList();
     cards.add(card);
     Shared.storeCardList(cards);
-    print("Work");
   }
 
   //save
@@ -125,9 +125,10 @@ class _DetailsPageState extends State<DetailsPage> {
         showToast('Enter only visa and master cards');
         return;
       }
+      _saveCard(creditCard);
+      backToFinish(creditCard);
     });
-    _saveCard(creditCard);
-    backToFinish(creditCard);
+
   }
 
   @override

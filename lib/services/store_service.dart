@@ -23,7 +23,7 @@ class Shared {
     return cardList;
   }
 
-  static Future<bool> removeUserList() async {
+  static Future<bool> removeCardList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.remove("card_list");
   }
