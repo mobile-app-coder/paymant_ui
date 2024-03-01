@@ -87,8 +87,7 @@ class _DetailsPageState extends State<DetailsPage> {
 
   //save cards to memory
   _saveCard(CreditCard card) async {
-
-    List<CreditCard>? cards = [];
+    List<CreditCard> cards = [];
     List<CreditCard>? storedCards = await Shared.loadCardList();
     if (storedCards != null) {
       cards.addAll(storedCards);
@@ -128,7 +127,6 @@ class _DetailsPageState extends State<DetailsPage> {
       _saveCard(creditCard);
       backToFinish(creditCard);
     });
-
   }
 
   @override
