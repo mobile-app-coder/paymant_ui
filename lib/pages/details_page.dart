@@ -13,6 +13,11 @@ class DetailsPage extends StatefulWidget {
   State<DetailsPage> createState() => _DetailsPageState();
 }
 
+
+//this is before commit
+
+
+
 class _DetailsPageState extends State<DetailsPage> {
   //controllers
   TextEditingController cardNumberController = TextEditingController();
@@ -46,25 +51,7 @@ class _DetailsPageState extends State<DetailsPage> {
     return '';
   }
 
-  //scanning
-  CardDetails? _cardDetails;
-  CardScanOptions scanOptions = const CardScanOptions(
-    scanCardHolderName: true,
-    // enableDebugLogs: true,
-    validCardsToScanBeforeFinishingScan: 5,
-    possibleCardHolderNamePositions: [
-      CardHolderNameScanPosition.aboveCardNumber,
-    ],
-  );
 
-  Future<void> scanCard() async {
-    final CardDetails? cardDetails =
-        await CardScanner.scanCard(scanOptions: scanOptions);
-    if (!mounted || cardDetails == null) return;
-    setState(() {
-      _cardDetails = cardDetails;
-    });
-  }
 
   //toast
 
@@ -201,7 +188,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         border: OutlineInputBorder(),
                         suffixIcon: IconButton(
                           onPressed: () {
-                            scanCard();
+                           
                           },
                           icon: const Icon(Icons.document_scanner_rounded),
                         ),
