@@ -1,4 +1,3 @@
-import 'package:credit_card_scanner/credit_card_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -188,7 +187,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         border: OutlineInputBorder(),
                         suffixIcon: IconButton(
                           onPressed: () {
-                           
+
                           },
                           icon: const Icon(Icons.document_scanner_rounded),
                         ),
