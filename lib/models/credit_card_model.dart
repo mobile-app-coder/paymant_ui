@@ -1,12 +1,22 @@
-class CreditCard {
-  String? cardNumber;
-  String? expiredDate;
-  String? cardType;
-  String? cardImage;
+import 'package:hive/hive.dart';
+part 'credit_card_model.g.dart';
 
-  CreditCard(
-      {this.cardNumber, this.expiredDate, this.cardType, this.cardImage});
+@HiveType(typeId: 0)
+class CreditCard extends HiveObject {
 
+  @HiveField(0)
+  late String cardNumber;
+
+  @HiveField(1)
+  late String expiredDate;
+
+  @HiveField(2)
+  late String cardType;
+
+  @HiveField(3)
+  late String cardImage;
+
+  CreditCard({required this.cardNumber, required this.expiredDate});
 
   CreditCard.fromMap(Map<String, dynamic> json)
       : cardNumber = json['cardNumber'],
@@ -14,8 +24,7 @@ class CreditCard {
         cardType = json['cardType'],
         cardImage = json['cardImage'];
 
-  Map<String, dynamic> toMap() =>
-      {
+  Map<String, dynamic> toMap() => {
         'expiredDate': expiredDate,
         'cardNumber': cardNumber,
         'cardType': cardType,

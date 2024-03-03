@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:paymant_ui/services/store_service.dart';
+import 'package:paymant_ui/services/nosql_service.dart';
 
 import '../models/credit_card_model.dart';
 
 class DetailsPage extends StatefulWidget {
-  const DetailsPage({super.key});
+  const DetailsPage({super.key, this.creditCard, this.index});
+
+  final CreditCard? creditCard;
+  final int? index;
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
 }
 
-
 //this is after commit
-
-
-
-
 
 class _DetailsPageState extends State<DetailsPage> {
   //controllers
@@ -52,8 +50,6 @@ class _DetailsPageState extends State<DetailsPage> {
     return '';
   }
 
-
-
   //toast
 
   void showToast(String message) {
@@ -69,20 +65,21 @@ class _DetailsPageState extends State<DetailsPage> {
   }
 
   //back
-  void backToFinish(CreditCard creditCard) {
-    Navigator.of(context).pop(creditCard);
+  void backToFinish() {
+    Navigator.of(context).pop();
   }
 
-  //save cards to memory
-  _saveCard(CreditCard card) async {
-    List<CreditCard> cards = [];
-    List<CreditCard>? storedCards = await Shared.loadCardList();
-    if (storedCards != null) {
-      cards.addAll(storedCards);
-    }
-    Shared.removeCardList();
-    cards.add(card);
-    Shared.storeCardList(cards);
+  saveCard(CreditCard card) {
+    setState(() {
+      if (widget.creditCard != null) {
+        NoSql.updateCard(widget.index! - 1, card);
+        print(widget.index!);
+        print("edit");
+      } else {
+        NoSql.saveCard(card);
+        print("add");
+      }
+    });
   }
 
   //save
@@ -112,19 +109,27 @@ class _DetailsPageState extends State<DetailsPage> {
         showToast('Enter only visa and master cards');
         return;
       }
-      _saveCard(creditCard);
-      backToFinish(creditCard);
+
+      saveCard(creditCard);
+      backToFinish();
     });
   }
 
+  String appBarTittle = "Add card";
+
   @override
   Widget build(BuildContext context) {
+    if (widget.creditCard != null) {
+      cardNumber = widget.creditCard!.cardNumber;
+      expiredDate = widget.creditCard!.expiredDate;
+      appBarTittle = "Edit card";
+    }
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add card"),
+        title: Text(appBarTittle),
       ),
       body: Container(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             //card
@@ -134,13 +139,13 @@ class _DetailsPageState extends State<DetailsPage> {
                   AspectRatio(
                     aspectRatio: 1005 / 555,
                     child: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         image: DecorationImage(
                             image: AssetImage("assets/images/im_card_bg.png"),
                             fit: BoxFit.cover),
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 20),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -149,12 +154,12 @@ class _DetailsPageState extends State<DetailsPage> {
                             children: [
                               Text(
                                 getType(),
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Colors.white, fontSize: 20),
                               )
                             ],
                           ),
-                          Container(
+                          SizedBox(
                             width: double.infinity,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -179,24 +184,25 @@ class _DetailsPageState extends State<DetailsPage> {
 
                   //card number input
                   Container(
-                    margin: EdgeInsets.only(top: 10),
+                    margin: const EdgeInsets.only(top: 10),
                     height: 45,
                     child: TextField(
                       controller: cardNumberController,
                       textAlignVertical: TextAlignVertical.bottom,
                       decoration: InputDecoration(
                         hintText: "Card number",
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          onPressed: () {
-
-                          },
+                          onPressed: () {},
                           icon: const Icon(Icons.document_scanner_rounded),
                         ),
                       ),
                       onChanged: (text) {
                         setState(
                           () {
+                            if (widget.creditCard != null) {
+                              widget.creditCard!.cardNumber = text;
+                            }
                             cardNumber = text;
                           },
                         );
@@ -221,6 +227,9 @@ class _DetailsPageState extends State<DetailsPage> {
                       onChanged: (value) {
                         setState(() {
                           expiredDate = value;
+                          if (widget.creditCard != null) {
+                            widget.creditCard!.expiredDate = value;
+                          }
                         });
                       },
                       inputFormatters: [expiryDateMaskFormatter],

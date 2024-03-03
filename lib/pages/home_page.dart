@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paymant_ui/pages/details_page.dart';
-import 'package:paymant_ui/services/store_service.dart';
+import 'package:paymant_ui/services/nosql_service.dart';
 
 import '../models/credit_card_model.dart';
 
@@ -14,26 +14,33 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<CreditCard> cards = [];
 
-  Future _openDetailsPage() async {
-    CreditCard result = await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (BuildContext context) {
-      return DetailsPage();
-    }));
-    _loadCards();
+  getCards() {
+    List<CreditCard> cardList = NoSql.getCards();
+    if (cardList.isNotEmpty) {
+      cards = cardList;
+    }
   }
 
-  _loadCards() async {
-    var memoryList = await Shared.loadCardList();
-
-    if (memoryList == null) {
-      return;
-    }
-
-    if (memoryList.isEmpty) {
-      return;
-    }
+  Future _openDetailsPage() async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (BuildContext context) {
+      return const DetailsPage();
+    }));
     setState(() {
-      cards = memoryList;
+      getCards();
+    });
+  }
+
+  Future _openEditPage(CreditCard card) async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (BuildContext context) {
+      return DetailsPage(
+        creditCard: card,
+        index: cards.indexOf(card),
+      );
+    }));
+    setState(() {
+      getCards();
     });
   }
 
@@ -41,7 +48,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     setState(() {
-      _loadCards();
+      getCards();
     });
   }
 
@@ -58,15 +65,15 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text(" Card list"),
+        title: const Text(" Card list"),
       ),
       body: Container(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Expanded(
               child: cards.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Text(
                         "No cards",
                         style: TextStyle(fontSize: 40),
@@ -75,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                   : ListView.builder(
                       itemCount: cards.length,
                       itemBuilder: (ctx, i) {
-                        return _itemCardList(cards[i]);
+                        return _itemCardList(cards[i], i);
                       },
                     ),
             ),
@@ -88,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   _openDetailsPage();
                 },
-                child: Text(
+                child: const Text(
                   'Add card',
                   style: TextStyle(color: Colors.white),
                 ),
@@ -101,24 +108,25 @@ class _HomePageState extends State<HomePage> {
   }
 
   //delete card
-  deleteCard(CreditCard creditCard) async {
-    cards.remove(creditCard);
-    Shared.removeCardList();
-    Shared.storeCardList(cards);
+  deleteCard(int index) async {
+    setState(() {
+      cards.removeAt(index);
+      NoSql.deleteCardByIndex(index);
+    });
   }
 
-  void openDialog(CreditCard card) {
+  void openDialog(int index) {
     showDialog(
         context: context,
         builder: (BuildContext buildContext) {
           return AlertDialog(
-            title: Text("Delete card"),
-            content: Text("Are you sure"),
+            title: const Text("Delete card"),
+            content: const Text("Are you sure"),
             actions: [
               MaterialButton(
                 onPressed: () {
                   setState(() {
-                    deleteCard(card);
+                    deleteCard(index);
                   });
                   Navigator.of(context).pop();
                 },
@@ -135,23 +143,26 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
-  Widget _itemCardList(CreditCard card) {
+  Widget _itemCardList(CreditCard card, int index) {
     return GestureDetector(
       onLongPress: () {
-        openDialog(card);
+        openDialog(index);
+      },
+      onTap: () {
+        _openEditPage(card);
       },
       child: Container(
-        margin: EdgeInsets.only(bottom: 15),
+        margin: const EdgeInsets.only(bottom: 15),
         height: 70,
         width: double.infinity,
         child: Row(
           children: [
             Container(
-              margin: EdgeInsets.only(right: 15),
+              margin: const EdgeInsets.only(right: 15),
               child: AspectRatio(
                 aspectRatio: 400 / 260,
                 child: Image(
-                  image: AssetImage(card.cardImage!),
+                  image: AssetImage(card.cardImage),
                 ),
               ),
             ),
@@ -159,12 +170,14 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "**** **** **** ${card.cardNumber!.substring(card.cardNumber!.length - 4)}",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  "**** **** **** ${card.cardNumber.substring(card.cardNumber.length - 4)}",
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  card.expiredDate!,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  card.expiredDate,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w500),
                 )
               ],
             )
