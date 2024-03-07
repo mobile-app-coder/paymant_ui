@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:paymant_ui/models/credit_card_model.dart';
 import 'package:paymant_ui/pages/home_page.dart';
+import 'package:paymant_ui/services/root_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  var appDocumentary = await getApplicationDocumentsDirectory();
-  Hive
-    ..init(appDocumentary.path)
-    ..registerAdapter(CreditCardAdapter());
-  await Hive.openBox("cards_db");
-
+  RootService.init();
   runApp(const MyApp());
 }
 

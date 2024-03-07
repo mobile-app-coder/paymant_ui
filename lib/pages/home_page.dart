@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:paymant_ui/pages/details_page.dart';
 import 'package:paymant_ui/services/nosql_service.dart';
+import 'package:paymant_ui/services/sql_service.dart';
+import 'package:paymant_ui/services/switcher.dart';
 
 import '../models/credit_card_model.dart';
 
@@ -12,12 +14,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool? dataBase;
+
   List<CreditCard> cards = [];
 
-  getCards() {
+  getCardsHive() {
     List<CreditCard> cardList = NoSql.getCards();
     if (cardList.isNotEmpty) {
       cards = cardList;
+    }
+  }
+
+  fetchCards() async {
+    List<CreditCard> cardsList = await SqlDb.fetchCards();
+    if (cardsList.isNotEmpty) {
+      setState(() {
+        cards = cardsList;
+      });
+    } else {
+      print("db is empty");
     }
   }
 
@@ -27,29 +42,25 @@ class _HomePageState extends State<HomePage> {
       return const DetailsPage();
     }));
     setState(() {
-      getCards();
+      fetchCards();
     });
   }
 
-  Future _openEditPage(CreditCard card) async {
+  Future _openEditPage(int index) async {
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (BuildContext context) {
       return DetailsPage(
-        creditCard: card,
-        index: cards.indexOf(card),
+        index: index,
       );
     }));
     setState(() {
-      getCards();
+      getCardsHive();
     });
   }
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      getCards();
-    });
   }
 
   Widget noCards() {
@@ -63,9 +74,44 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Container(
+          child: Container(
+            margin: EdgeInsets.only(top: 30, left: 20),
+            width: double.infinity,
+            height: 200,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text("Sql"),
+                    Checkbox(
+                      value: true,
+                      onChanged: (choice) {
+                        setState(() {});
+                      },
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text("NoSql"),
+                    Checkbox(
+                      value: true,
+                      onChanged: (choice) {
+                        setState(() {});
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(" Card list"),
+        title: Text("NoSql"),
       ),
       body: Container(
         padding: const EdgeInsets.all(20),
@@ -82,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                   : ListView.builder(
                       itemCount: cards.length,
                       itemBuilder: (ctx, i) {
-                        return _itemCardList(cards[i], i);
+                        return _itemCardList(i);
                       },
                     ),
             ),
@@ -111,7 +157,7 @@ class _HomePageState extends State<HomePage> {
   deleteCard(int index) async {
     setState(() {
       cards.removeAt(index);
-      NoSql.deleteCardByIndex(index);
+      SqlDb.deleteCard(index);
     });
   }
 
@@ -143,13 +189,13 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
-  Widget _itemCardList(CreditCard card, int index) {
+  Widget _itemCardList(int index) {
     return GestureDetector(
       onLongPress: () {
-        openDialog(index);
+        openDialog(cards[index].id!);
       },
       onTap: () {
-        _openEditPage(card);
+        _openEditPage(cards[index].id!);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
@@ -162,7 +208,7 @@ class _HomePageState extends State<HomePage> {
               child: AspectRatio(
                 aspectRatio: 400 / 260,
                 child: Image(
-                  image: AssetImage(card.cardImage),
+                  image: AssetImage(cards[index].cardImage),
                 ),
               ),
             ),
@@ -170,12 +216,12 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "**** **** **** ${card.cardNumber.substring(card.cardNumber.length - 4)}",
+                  "**** **** **** ${cards[index].cardNumber.substring(cards[index].cardNumber.length - 4)}",
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  card.expiredDate,
+                  cards[index].expiredDate,
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w500),
                 )

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:paymant_ui/services/nosql_service.dart';
+import 'package:paymant_ui/services/sql_service.dart';
 
 import '../models/credit_card_model.dart';
 
 class DetailsPage extends StatefulWidget {
-  const DetailsPage({super.key, this.creditCard, this.index});
+  const DetailsPage({super.key, this.index});
 
-  final CreditCard? creditCard;
   final int? index;
 
   @override
@@ -18,13 +18,28 @@ class DetailsPage extends StatefulWidget {
 //this is after commit
 
 class _DetailsPageState extends State<DetailsPage> {
+  CreditCard? _card ;
+  String appBarTittle = "Add card";
+
+  String cardNumber = '0000 0000 0000 0000';
+  String expiredDate = 'MM/YY';
+
+  @override
+  initState() {
+    super.initState();
+    if (widget.index != null) {
+      //_card = NoSql.getCardByIndex(widget.index!);
+      appBarTittle = "Edit card";
+      cardNumber = _card!.cardNumber;
+      expiredDate = _card!.expiredDate;
+    }
+  }
+
   //controllers
   TextEditingController cardNumberController = TextEditingController();
   TextEditingController expiredDateController = TextEditingController();
 
   //card numbers and expire date
-  String cardNumber = '0000 0000 0000 0000';
-  String expiredDate = 'MM/YY';
 
   //formatters
   var cardNumberMaskFormatter = MaskTextInputFormatter(
@@ -71,13 +86,20 @@ class _DetailsPageState extends State<DetailsPage> {
 
   saveCard(CreditCard card) {
     setState(() {
-      if (widget.creditCard != null) {
-        NoSql.updateCard(widget.index! - 1, card);
-        print(widget.index!);
-        print("edit");
+      if (widget.index != null) {
+        NoSql.updateCard(widget.index!, card);
       } else {
         NoSql.saveCard(card);
-        print("add");
+      }
+    });
+  }
+
+  saveCardSQL(CreditCard card) {
+    setState(() {
+      if (widget.index != null) {
+        SqlDb.updatePost(card);
+      } else {
+        SqlDb.createCard(card);
       }
     });
   }
@@ -110,20 +132,14 @@ class _DetailsPageState extends State<DetailsPage> {
         return;
       }
 
-      saveCard(creditCard);
+      saveCardSQL(creditCard);
+
       backToFinish();
     });
   }
 
-  String appBarTittle = "Add card";
-
   @override
   Widget build(BuildContext context) {
-    if (widget.creditCard != null) {
-      cardNumber = widget.creditCard!.cardNumber;
-      expiredDate = widget.creditCard!.expiredDate;
-      appBarTittle = "Edit card";
-    }
     return Scaffold(
       appBar: AppBar(
         title: Text(appBarTittle),
@@ -166,12 +182,12 @@ class _DetailsPageState extends State<DetailsPage> {
                               children: [
                                 Text(
                                   cardNumber,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       color: Colors.white, fontSize: 25),
                                 ),
                                 Text(
                                   expiredDate,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       color: Colors.white, fontSize: 20),
                                 )
                               ],
@@ -200,9 +216,6 @@ class _DetailsPageState extends State<DetailsPage> {
                       onChanged: (text) {
                         setState(
                           () {
-                            if (widget.creditCard != null) {
-                              widget.creditCard!.cardNumber = text;
-                            }
                             cardNumber = text;
                           },
                         );
@@ -227,9 +240,6 @@ class _DetailsPageState extends State<DetailsPage> {
                       onChanged: (value) {
                         setState(() {
                           expiredDate = value;
-                          if (widget.creditCard != null) {
-                            widget.creditCard!.expiredDate = value;
-                          }
                         });
                       },
                       inputFormatters: [expiryDateMaskFormatter],
